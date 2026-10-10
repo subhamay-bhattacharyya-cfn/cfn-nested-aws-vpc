@@ -1,5 +1,4 @@
 {
   "Environment": "devl",
-  "KmsKey": "SB-KMS",
   "CiSuffix": ""
 }

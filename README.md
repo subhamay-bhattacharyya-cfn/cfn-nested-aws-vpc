@@ -49,6 +49,7 @@ This is a **nested stack template** designed to be invoked from a parent/root Cl
 | ----------- | ------ | --------- | ------------- | ------------- |
 | `EnvironmentName` | String | `devl` | `devl`, `test`, `prod` | Environment name, applied as the `Environment` tag |
 | `VpcNameTag` | String | — (required) | Starts with a letter; letters, digits and hyphens only | Name prefix for the VPC and related resources |
+| `CiSuffix` | String | `""` | Letters, digits and hyphens only; may be empty | Optional CI suffix appended to the Name tags (e.g., `-pipeline-12345`) |
 | `VPCCidrBlock` | String | `10.0.0.0/16` | IPv4 CIDR format (e.g., `10.0.0.0/16`) | CIDR block for the VPC |
 | `EnableDnsHostnames` | String | `true` | `true`, `false` | Enables DNS support and DNS hostnames in the VPC |
 | `EnableInternetGateway` | String | `true` | `true`, `false` | Creates an Internet Gateway and attaches it to the VPC |
@@ -136,8 +137,8 @@ aws cloudformation validate-template --template-body file://cloudformation/templ
 
 | Resource | Name / Tag |
 | ----------- | ------------- |
-| VPC | `{VpcNameTag}-vpc` |
-| Internet Gateway | `{VpcNameTag}-vpc-igw` |
+| VPC | `{VpcNameTag}-vpc` (or `{VpcNameTag}-vpc-{CiSuffix}` when `CiSuffix` is set) |
+| Internet Gateway | `{VpcNameTag}-vpc-igw` (or `{VpcNameTag}-vpc-igw-{CiSuffix}` when `CiSuffix` is set) |
 | All resources | `Environment` tag set from `EnvironmentName` |
 
 Example: `VpcNameTag=myproject` in `devl` produces a VPC named `myproject-vpc` and an Internet Gateway named `myproject-vpc-igw`.

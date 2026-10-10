@@ -10,6 +10,7 @@ Metadata:
         Parameters:
           - EnvironmentName
           - VpcNameTag
+          - CiSuffix
           - VPCCidrBlock
           - EnableDnsHostnames
       - Label:
@@ -22,6 +23,8 @@ Metadata:
         default: Environment name (devl, test, prod)
       VpcNameTag:
         default: VPC name prefix for resources
+      CiSuffix:
+        default: Optional CI suffix appended to name tags
       VPCCidrBlock:
         default: VPC CIDR block (e.g., 10.0.0.0/16)
       EnableDnsHostnames:
@@ -46,6 +49,13 @@ Parameters:
     Description: Name tag prefix for VPC and associated resources
     AllowedPattern: '^[a-zA-Z][-a-zA-Z0-9]*$'
     ConstraintDescription: Must start with letter, contain only alphanumeric and hyphens
+
+  CiSuffix:
+    Type: String
+    Description: Optional CI suffix appended to the Name tags (leave empty to omit)
+    Default: ''
+    AllowedPattern: '^[a-zA-Z0-9-]*$'
+    ConstraintDescription: May contain only alphanumeric characters and hyphens
 
   VPCCidrBlock:
     Type: String
@@ -73,6 +83,7 @@ Parameters:
 Conditions:
   EnableDns: !Equals [!Ref EnableDnsHostnames, 'true']
   CreateInternetGateway: !Equals [!Ref EnableInternetGateway, 'true']
+  HasCiSuffix: !Not [!Equals [!Ref CiSuffix, '']]
 
 
 Resources:
@@ -91,7 +102,10 @@ Resources:
       EnableDnsSupport: !If [EnableDns, true, false]
       Tags:
         - Key: Name
-          Value: !Sub '${VpcNameTag}-vpc'
+          Value: !If
+            - HasCiSuffix
+            - !Sub '${VpcNameTag}-vpc-${CiSuffix}'
+            - !Sub '${VpcNameTag}-vpc'
         - Key: Environment
           Value: !Ref EnvironmentName
 
@@ -110,7 +124,10 @@ Resources:
     Properties:
       Tags:
         - Key: Name
-          Value: !Sub '${VpcNameTag}-vpc-igw'
+          Value: !If
+            - HasCiSuffix
+            - !Sub '${VpcNameTag}-vpc-igw-${CiSuffix}'
+            - !Sub '${VpcNameTag}-vpc-igw'
         - Key: Environment
           Value: !Ref EnvironmentName
 
