@@ -1,59 +1,146 @@
 AWSTemplateFormatVersion: '2010-09-09'
 
-Description: 'Nested CloudFormation template to create an S3 bucket with versioning and public access blocking'
+Description: 'Nested VPC stack that creates a VPC with DNS support and hostnames enabled, plus an optional Internet Gateway.'
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: VPC Configuration
+        Parameters:
+          - EnvironmentName
+          - VpcNameTag
+          - VPCCidrBlock
+          - EnableDnsHostnames
+      - Label:
+          default: Internet Connectivity
+        Parameters:
+          - EnableInternetGateway
+
+    ParameterLabels:
+      EnvironmentName:
+        default: Environment name (devl, test, prod)
+      VpcNameTag:
+        default: VPC name prefix for resources
+      VPCCidrBlock:
+        default: VPC CIDR block (e.g., 10.0.0.0/16)
+      EnableDnsHostnames:
+        default: Enable DNS hostnames in VPC?
+      EnableInternetGateway:
+        default: Enable Internet Gateway attachment?
+
 
 Parameters:
-  ProjectName:
-    Type: String
-    Description: "Project name to use as a bucket prefix"
-    MinLength: 1
-    MaxLength: 20
-    AllowedPattern: "^[a-z0-9-]+$"
-    ConstraintDescription: "Project name must be lowercase letters, numbers, and hyphens only"
-
-  BucketBaseName:
-    Type: String
-    Default: cfn-bucket
-    Description: Base name for the S3 bucket (account ID, environment, and region will be appended)
-
-  environment:
+  EnvironmentName:
     Type: String
     Default: devl
-    Description: "Deployment environment for the S3 bucket"
+    Description: Environment name prefix
+    AllowedValues:
+      - devl
+      - test
+      - prod
+    ConstraintDescription: Must be devl, test, or prod
 
-  CiSuffix:
+  VpcNameTag:
     Type: String
-    Default: ""
-    Description: "Optional CI prefix to append to the bucket name"
+    Description: Name tag prefix for VPC and associated resources
+    AllowedPattern: '^[a-zA-Z][-a-zA-Z0-9]*$'
+    ConstraintDescription: Must start with letter, contain only alphanumeric and hyphens
+
+  VPCCidrBlock:
+    Type: String
+    Description: CIDR block for the VPC (e.g., 10.0.0.0/16)
+    AllowedPattern: '^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$'
+    ConstraintDescription: Must be valid CIDR block
+    Default: '10.0.0.0/16'
+
+  EnableDnsHostnames:
+    Type: String
+    Description: Enable DNS hostnames and DNS support in VPC
+    Default: 'true'
+    AllowedValues:
+      - 'true'
+      - 'false'
+
+  EnableInternetGateway:
+    Type: String
+    Description: Enable Internet Gateway attachment to VPC
+    Default: 'true'
+    AllowedValues:
+      - 'true'
+      - 'false'
 
 Conditions:
-  HasCiSuffix: !Not [!Equals [!Ref CiSuffix, ""]]
+  EnableDns: !Equals [!Ref EnableDnsHostnames, 'true']
+  CreateInternetGateway: !Equals [!Ref EnableInternetGateway, 'true']
+
 
 Resources:
-  S3Bucket:
-    Type: AWS::S3::Bucket
+  # ============================================================================
+  # VPC
+  # ============================================================================
+
+  VPC:
+    Type: AWS::EC2::VPC
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Core networking infrastructure for the entire stack; all subnets, route tables, and gateways attach to this VPC
     Properties:
-      BucketName: !If
-        - HasCiSuffix
-        - !Sub '${ProjectName}-${BucketBaseName}-${AWS::AccountId}-${environment}-${AWS::Region}-${CiSuffix}'
-        - !Sub '${ProjectName}-${BucketBaseName}-${AWS::AccountId}-${environment}-${AWS::Region}'
-      VersioningConfiguration:
-        Status: Enabled
-      PublicAccessBlockConfiguration:
-        BlockPublicAcls: true
-        BlockPublicPolicy: true
-        IgnorePublicAcls: true
-        RestrictPublicBuckets: true
+      CidrBlock: !Ref VPCCidrBlock
+      EnableDnsHostnames: !If [EnableDns, true, false]
+      EnableDnsSupport: !If [EnableDns, true, false]
+      Tags:
+        - Key: Name
+          Value: !Sub '${VpcNameTag}-vpc'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  # ============================================================================
+  # Internet Gateway (Optional)
+  # ============================================================================
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Condition: CreateInternetGateway
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Enables internet connectivity for public subnets; optional to support isolated VPC deployments
+        must:
+          - Must be attached to VPC via AttachGateway before PublicRoute uses it
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${VpcNameTag}-vpc-igw'
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  AttachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Condition: CreateInternetGateway
+    Metadata:
+      com.aws.cloudformation.Context:
+        why: Attaches Internet Gateway to VPC; required before public subnets can route to internet
+        must:
+          - Must complete before PublicRoute can forward traffic to InternetGateway
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+
+# ============================================================================
+# Outputs (all commented out while only the VPC resource is active)
+# ============================================================================
 
 Outputs:
-  S3BucketName:
-    Description: "Name of the S3 bucket"
-    Value: !Ref S3Bucket
-    Export:
-      Name: !Sub "${AWS::StackName}-BucketName"
+ VPCId:
+   Description: VPC ID
+   Value: !Ref VPC
 
-  S3BucketArn:
-    Description: "ARN of the S3 bucket"
-    Value: !GetAtt S3Bucket.Arn
-    Export:
-      Name: !Sub "${AWS::StackName}-BucketArn"
+ VPCCidr:
+   Description: VPC CIDR Block
+   Value: !GetAtt VPC.CidrBlock
+
+ InternetGatewayId:
+   Description: Internet Gateway ID
+   Condition: CreateInternetGateway
+   Value: !Ref InternetGateway
