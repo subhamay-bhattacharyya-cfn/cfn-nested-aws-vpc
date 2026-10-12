@@ -1,5 +1,5 @@
 {
-  "EnvironmentName": "devl",
+  "Environment": "devl",
   "VpcNameTag": "my-vpc",
   "CiSuffix": ""
 }

@@ -8,7 +8,7 @@ Metadata:
       - Label:
           default: VPC Configuration
         Parameters:
-          - EnvironmentName
+          - Environment
           - VpcNameTag
           - CiSuffix
           - VPCCidrBlock
@@ -19,7 +19,7 @@ Metadata:
           - EnableInternetGateway
 
     ParameterLabels:
-      EnvironmentName:
+      Environment:
         default: Environment name (devl, test, prod)
       VpcNameTag:
         default: VPC name prefix for resources
@@ -34,7 +34,7 @@ Metadata:
 
 
 Parameters:
-  EnvironmentName:
+  Environment:
     Type: String
     Default: devl
     Description: Environment name prefix
@@ -107,7 +107,7 @@ Resources:
             - !Sub '${VpcNameTag}-vpc-${CiSuffix}'
             - !Sub '${VpcNameTag}-vpc'
         - Key: Environment
-          Value: !Ref EnvironmentName
+          Value: !Ref Environment
 
   # ============================================================================
   # Internet Gateway (Optional)
@@ -129,7 +129,7 @@ Resources:
             - !Sub '${VpcNameTag}-vpc-igw-${CiSuffix}'
             - !Sub '${VpcNameTag}-vpc-igw'
         - Key: Environment
-          Value: !Ref EnvironmentName
+          Value: !Ref Environment
 
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
