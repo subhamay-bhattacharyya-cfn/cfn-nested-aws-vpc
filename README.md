@@ -1,4 +1,4 @@
-# CloudFormation Nested Stack Template : VPC with Internet Gateway.
+# CloudFormation Nested Stack Template : VPC with Internet Gateway
 
 <!-- Row 1: Status - Most Important -->
 [![Release](https://github.com/subhamay-bhattacharyya-cfn/cfn-nested-aws-vpc/actions/workflows/release.yaml/badge.svg)](https://github.com/subhamay-bhattacharyya-cfn/cfn-nested-aws-vpc)&nbsp;[![GitHub Action](https://img.shields.io/badge/GitHub-Action-blue?logo=github)](https://github.com/subhamay-bhattacharyya-cfn/cfn-nested-aws-vpc)&nbsp;[![Issues](https://img.shields.io/github/issues/subhamay-bhattacharyya-cfn/cfn-nested-aws-vpc)](https://github.com/subhamay-bhattacharyya-cfn/cfn-nested-aws-vpc/issues)&nbsp;[![Last Commit](https://img.shields.io/github/last-commit/subhamay-bhattacharyya-cfn/cfn-nested-aws-vpc)](https://github.com/subhamay-bhattacharyya-cfn/cfn-nested-aws-vpc/commits)
