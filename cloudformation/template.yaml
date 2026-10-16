@@ -85,7 +85,6 @@ Conditions:
   CreateInternetGateway: !Equals [!Ref EnableInternetGateway, 'true']
   HasCiSuffix: !Not [!Equals [!Ref CiSuffix, '']]
 
-
 Resources:
   # ============================================================================
   # VPC
