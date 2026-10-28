@@ -1,5 +1,5 @@
 {
   "Environment": "devl",
-  "VpcNameTag": "my-vpc",
+  "VpcNameTag": "cfn-nested",
   "CiSuffix": ""
 }
